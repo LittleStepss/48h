@@ -24,14 +24,14 @@ type Individus struct {
 }
 
 type CNI struct {
-	ID       uint   `json:"id" gorm:"primaryKey"`
+	ID      uint   `json:"id" gorm:"primaryKey"`
 	Number  string `json:"number"`
 	Date_of_expiry string `json:"date_of_expiry"`
 	IndividusID uint   `json:"individus_id"`
 }
 
 type Collaborateurs struct {
-	ID       uint   `json:"id" gorm:"primaryKey"`
+	ID        uint   `json:"id" gorm:"primaryKey"`
 	Email     string `json:"name"`
 	Password  string `json:"surname"`
 }
@@ -119,7 +119,7 @@ func getIndividu(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Individu not found",
+		"message": "Success Retrieving the individu",
 		"code": 200,
 		"data": individu,
 	})
@@ -246,18 +246,67 @@ func Error404(c *gin.Context) {
 	})
 	return
 }
+
+// AuthMiddleware checks if the request contains a valid token
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get the Authorization header
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusOK, gin.H{
+				"code":    403,
+				"message": "Authorization header is missing",
+			})
+			c.Abort()
+			return
+		}
+
+		// Check if it follows the "Bearer <token>" format
+		tokenParts := strings.Split(authHeader, " ")
+		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+			c.JSON(http.StatusOK, gin.H{
+				"code":    403,
+				"message": "Invalid token",
+			})
+			c.Abort()
+			return
+		}
+
+		token := tokenParts[1]
+		// Verify the token (replace with actual verification logic)
+		if token != "6UXrKe@zSKdnn7rUz#4A@NQ6CU#PYEgw4eRuK^*f" { // Replace this with real token validation
+
+			c.JSON(http.StatusOK, gin.H{
+				"code":    403,
+				"message": "Invalid token",
+			})
+			c.Abort()
+			return
+		}
+
+		// Proceed with the request
+		c.Next()
+	}
+}
+
 func main() {
 	initDB()
 
 	r := gin.Default()
-	r.GET("/clients", getClients)
-	r.GET("/clients/:id", getClient)
-	r.GET("/individus", getIndividus)
-	r.GET("/individus/:id", getIndividu)
-	r.POST("/login", postlogin)
-	r.POST("/cni/create", postCNI)
+	// Public route
 	r.GET("/api", getDoc)
 	r.GET("/", Error404)
+
+	protected := r.Group("/")
+	protected.Use(AuthMiddleware())
+	{
+		protected.GET("/clients", getClients)
+		protected.GET("/clients/:id", getClient)
+		protected.GET("/individus", getIndividus)
+		protected.GET("/individus/:id", getIndividu)
+		protected.POST("/login", postlogin)
+		protected.POST("/cni/create", postCNI)
+	}
 
 	r.Run(":8080")
 }
