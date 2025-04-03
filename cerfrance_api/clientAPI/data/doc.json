@@ -1,0 +1,37 @@
+{
+    "/clients" : {
+        "method" : "GET",
+        "description" : "Get all clients",
+        "params" : "none"
+    },
+
+    "/clients/{id}" : {
+        "method" : "GET",
+        "description" : "Get a specific client",
+        "params" : "id (clients id)"
+    },
+
+    "/individus" : {
+        "method" : "GET",
+        "description" : "Get all individus",
+        "params" : "none"
+    },
+
+    "/individus/{id}" : {
+        "method" : "GET",
+        "description" : "Get a specific individu",
+        "params" : "id (individu id)"
+    },
+
+    "/login" : {
+        "method" : "POST",
+        "description" : "Login",
+        "params" : ["email", "password"]
+    },
+
+    "/cni/create" : {
+        "method" : "POST",
+        "description" : "Create a new cni for a user",
+        "params" : ["individus_id", "number", "date_of_expiry"]
+    }
+}
