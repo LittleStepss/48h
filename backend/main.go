@@ -1,12 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"golang.org/x/crypto/bcrypt"
-	"bytes"
 )
 
 type Client struct {
@@ -40,14 +39,6 @@ type LoginResponse struct {
 	Message string `json:"message"`
 }
 
-// structure d’un utilisateur simulé (comme une base)
-type User struct {
-	Username       string
-	HashedPassword string
-}
-
-var users = []User{}
-
 const baseURL = "http://foureight.gurvan-nicolas.fr:8080"
 
 // Fonction générique pour récupérer des données via GET
@@ -75,29 +66,8 @@ func getData[T any](endpoint string) ([]T, error) {
 	return apiResp.Data, nil
 }
 
-func hashPassword(password string) (string, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hashed), nil
-}
-
-func checkPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-func registerUser(username, password string) error {
-	hashedPassword, err := hashPassword(password)
-	if err != nil {
-		return err
-	}
-	users = append(users, User{Username: username, HashedPassword: hashedPassword})
-	return nil
-}
-
-func loginViaAPI(username, password string) (string, error) {
+// Fonction pour effectuer un login
+func login(username, password string) (string, error) {
 	data := LoginRequest{Username: username, Password: password}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -123,19 +93,7 @@ func loginViaAPI(username, password string) (string, error) {
 	return loginResp.Token, nil
 }
 
-
-func loginLocal(username, password string) (string, error) {
-	for _, user := range users {
-		if user.Username == username {
-			if checkPasswordHash(password, user.HashedPassword) {
-				return "fake-jwt-token-123", nil
-			}
-			return "", fmt.Errorf("mot de passe invalide")
-		}
-	}
-	return "", fmt.Errorf("utilisateur non trouvé")
-}
-
+// Fonction pour récupérer la doc API
 func getAPIDoc() (string, error) {
 	resp, err := http.Get(baseURL + "/api")
 	if err != nil {
@@ -156,6 +114,7 @@ func getAPIDoc() (string, error) {
 }
 
 func main() {
+	// Récupération table clients (personne morale)
 	clients, err := getData[Client]("/clients")
 	if err != nil {
 		fmt.Println("Erreur récupération clients:", err)
@@ -166,6 +125,7 @@ func main() {
 		}
 	}
 
+	// Récupération table individus (personne physique)
 	individus, err := getData[Individu]("/individus")
 	if err != nil {
 		fmt.Println("Erreur récupération individus:", err)
@@ -176,21 +136,18 @@ func main() {
 		}
 	}
 
+	// connexion avec id valide
 	username := "didier.zozo@cerfrance.fr"
 	password := "rootroot"
 
-	err = registerUser(username, password)
-	if err != nil {
-		fmt.Println("Erreur enregistrement utilisateur:", err)
-		return
-	}
-
-	token, err := loginLocal(username, password) // ou loginViaAPI(username, password)
+	token, err := login(username, password)
 	if err != nil {
 		fmt.Println("Erreur connexion:", err)
 	} else {
 		fmt.Println("Connexion réussie ! Token:", token)
+		// = login OK donc peut continuer sur page Selection du client
 	}
+
 	// Récupération de la documentation API
 	doc, err := getAPIDoc()
 	if err != nil {
