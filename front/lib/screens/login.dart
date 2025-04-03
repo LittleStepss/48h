@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'select_client.dart';
+import 'scan_idcard.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -108,6 +109,16 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: login,
               child: const Text('Se connecter'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ScanIdCardScreen(individuId: 1)),
+                );
+              },
+              child: const Text('Aller directement à SelectClient'),
             ),
           ],
         ),
