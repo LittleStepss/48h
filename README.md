@@ -39,5 +39,6 @@ Enfin, on attendra un guide expliquant les mesures qui ont été prises pour gar
 
 ## Schéma infrastructure de l'application :
 
-![image](https://github.com/user-attachments/assets/7c72d764-5956-4512-8c08-0b1477e4952f)
+![image](https://github.com/user-attachments/assets/93a01cb3-7952-4567-8b74-694963752080)
+
 
