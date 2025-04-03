@@ -36,17 +36,18 @@ class _ScanIdCardScreenState extends State<ScanIdCardScreen> {
           _imageFile = File(pickedFile.path);
         });
       }
-      _performOCR(pickedFile);
+      _performOCR(File(pickedFile.path));
     }
   }
 
-  Future<void> _performOCR(XFile imageFile) async {
-    String text = await FlutterTesseractOcr.extractText(imageFile!.path);
+  Future<void> _performOCR(File imageFile) async {
+    String text = await FlutterTesseractOcr.extractText(imageFile.path);
     print("Texte OCR extrait : $text");
     setState(() {
       _ocrText = text;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
