@@ -1,5 +1,6 @@
 # 48h
 
+## Rappel de la demande :
 
 L’objectif idéal est de développer une application mobile pour le compte de Cerfrance Vendée, permettant de :  
 
@@ -36,3 +37,6 @@ En revanche, vous devez partir du principe que le client sélectionnera votre pr
 
 Enfin, on attendra un guide expliquant les mesures qui ont été prises pour garantir la sécurité des données et des préconisations permettant de sécuriser le serveur où serait hébergé votre solution. Il ne devra pas dépasser 4 pages et rester synthétique. Il peut faire référence à des documents externes plus abouti, mais on n'attend pas de vous de tout ré-écrire par vous-mêmes.
 
+## Schéma infrastructure de l'application :
+
+![image](https://github.com/user-attachments/assets/6a7a1524-3efa-4c40-86f3-f4c0f85ceda9)
