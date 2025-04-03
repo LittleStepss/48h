@@ -39,7 +39,7 @@ class _SelectPersonScreenState extends State<SelectPersonScreen> {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         List<dynamic> allIndividus = responseData["data"];
 
-        // Filtrer les individus par id du client
+        // Filtrer  les individus par id du client
         setState(() {
           individus = allIndividus.where((individu) => individu["client_id"] == widget.clientId).toList();
           filteredIndividus = individus;  
