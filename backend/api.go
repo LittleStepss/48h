@@ -65,7 +65,11 @@ func RegisterRoutes(r *gin.Engine) {
 // Handlers
 
 func getClients(c *gin.Context) {
-  c.JSON(http.StatusOK, clients)
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"data":    clients,
+		"message": "Success Retrieving clients",
+	})
 }
 
 func getAllIndividus(c *gin.Context) {
