@@ -119,7 +119,7 @@ func getIndividu(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Individu not found",
+		"message": "Success Retrieving the individu",
 		"code": 200,
 		"data": individu,
 	})
@@ -274,7 +274,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		token := tokenParts[1]
 		// Verify the token (replace with actual verification logic)
-		if token != "ghee" { // Replace this with real token validation
+		if token != "6UXrKe@zSKdnn7rUz#4A@NQ6CU#PYEgw4eRuK^*f" { // Replace this with real token validation
 
 			c.JSON(http.StatusOK, gin.H{
 				"code":    403,
