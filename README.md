@@ -1,5 +1,9 @@
 # 48h
 
+cd front 
+flutter pub get pour recuperer les dependances 
+flutter run pour lance le projet
+
 ## Rappel de la demande :
 
 L’objectif idéal est de développer une application mobile pour le compte de Cerfrance Vendée, permettant de :  
