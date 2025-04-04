@@ -8,6 +8,8 @@ import (
 	"os"
 	"io/ioutil"
 	"strings"
+	"clientAPI/tools"
+	"fmt"
 )
 
 // Models
@@ -37,6 +39,33 @@ type Collaborateurs struct {
 }
 
 var db *gorm.DB
+var Token = ""
+
+func main() {
+	gin.SetMode(gin.ReleaseMode)
+	Token = tools.LoadEnv() // Load environment variables
+
+	initDB()	 // Initialize the database
+	r := gin.Default()
+
+	// Public route
+	r.GET("/api", getDoc)
+	r.GET("/", Error404)
+
+	// Protected routes
+	protected := r.Group("/")
+	protected.Use(AuthMiddleware())
+	{
+		protected.GET("/clients", getClients)
+		protected.GET("/clients/:id", getClient)
+		protected.GET("/individus", getIndividus)
+		protected.GET("/individus/:id", getIndividu)
+		protected.POST("/cni/create", postCNI)
+		protected.POST("/login", postlogin)
+	}
+
+	r.Run(":8080")
+}
 
 func initDB() {
 	var err error
@@ -166,9 +195,9 @@ func postlogin(c *gin.Context) {
 		}
 		return
 	}
-
+	fmt.Println(collaborateur.Password, tools.HashPasswordSHA256(request.Password))
 	// Compare the provided password with the hashed password in the database
-	if collaborateur.Password != request.Password {
+	if collaborateur.Password != tools.HashPasswordSHA256(request.Password) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Invalid email or password",
 			"code": 401,
@@ -274,7 +303,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		token := tokenParts[1]
 		// Verify the token (replace with actual verification logic)
-		if token != "6UXrKe@zSKdnn7rUz#4A@NQ6CU#PYEgw4eRuK^*f" { // Replace this with real token validation
+		if token != Token { // Replace this with real token validation
 
 			c.JSON(http.StatusOK, gin.H{
 				"code":    403,
@@ -289,24 +318,4 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func main() {
-	initDB()
 
-	r := gin.Default()
-	// Public route
-	r.GET("/api", getDoc)
-	r.GET("/", Error404)
-
-	protected := r.Group("/")
-	protected.Use(AuthMiddleware())
-	{
-		protected.GET("/clients", getClients)
-		protected.GET("/clients/:id", getClient)
-		protected.GET("/individus", getIndividus)
-		protected.GET("/individus/:id", getIndividu)
-		protected.POST("/login", postlogin)
-		protected.POST("/cni/create", postCNI)
-	}
-
-	r.Run(":8080")
-}
