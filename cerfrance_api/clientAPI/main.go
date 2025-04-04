@@ -148,7 +148,7 @@ func getIndividu(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Individu not found",
+		"message": "Success Retrieving the individu",
 		"code": 200,
 		"data": individu,
 	})
