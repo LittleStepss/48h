@@ -12,4 +12,4 @@
 
     2. Crée un fichier .env avec le token de l'api cerfrance (un exemple)
 
-    3. Lancer le programme avec la commande 'go run api.go' dans le repertoire BACKENDs
+    3. Lancer le programme avec la commande 'go run api.go' dans le repertoire backend
