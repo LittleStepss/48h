@@ -35,8 +35,8 @@ Application mobile développée pour Cerfrance Vendée permettant la numérisati
 
 1. Cloner le projet :
 ```bash
-git clone [URL_DU_REPO]
-cd [NOM_DU_REPO]
+git clone https://github.com/LittleStepss/48h
+cd /48h/
 ```
 
 2. Configuration du backend :
