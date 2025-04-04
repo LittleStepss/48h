@@ -54,4 +54,4 @@ INSERT INTO individus (name, surname, client_id) VALUES ('Oscar', 'Thomas', 4);
 INSERT INTO individus (name, surname, client_id) VALUES ('Sam', 'Clark', 5);
 INSERT INTO individus (name, surname, client_id) VALUES ('Tina', 'Walker', 5);
 
-INSERT INTO collaborateurs (email, password) VALUES ('didier.zozo@cerfrance.fr', 'rootroot');
+INSERT INTO collaborateurs (email, password) VALUES ('d', 'rootroot');
