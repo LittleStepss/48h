@@ -71,4 +71,5 @@ SELECT 'Tina', 'Walker', 5 WHERE NOT EXISTS (SELECT 1 FROM individus WHERE name 
 
 -- Creating Collaborateurs if they do not already exist
 INSERT INTO collaborateurs (email, password) 
-SELECT 'didier.zozo@cerfrance.fr', 'rootroot' WHERE NOT EXISTS (SELECT 1 FROM collaborateurs WHERE email = 'didier.zozo@cerfrance.fr');
+SELECT 'didier.zozo@cerfrance.fr', '0242c0436daa4c241ca8a793764b7dfb50c223121bb844cf49be670a3af4dd18' WHERE NOT EXISTS (SELECT 1 FROM collaborateurs WHERE email = 'didier.zozo@cerfrance.fr');
+SELECT 'd@d.com', '0242c0436daa4c241ca8a793764b7dfb50c223121bb844cf49be670a3af4dd18' WHERE NOT EXISTS (SELECT 1 FROM collaborateurs WHERE email = 'd@d.com');

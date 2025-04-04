@@ -11,8 +11,9 @@ RUN go build -o main .
 # Ensure the data directory exists and set permissions
 RUN mkdir -p /data && chmod -R 777 /data
 
-# Copy the SQL initialization script
+# Copy the SQL initialization script, .env file, and JSON files
 COPY data/init.sql /data/init.sql
+COPY .env /.env
 COPY data/doc.json /data/doc.json
 
 EXPOSE 8080
