@@ -1,4 +1,3 @@
 class APIConfig {
-  static const String baseUrl = 'https://api.example.com';// Replace with your actual API base URL
- 
+  static const String baseUrl = 'http://127.0.0.1:8080';
 }

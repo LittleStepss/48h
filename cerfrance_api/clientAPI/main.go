@@ -1,15 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"net/http"
-	"os"
-	"io/ioutil"
-	"strings"
-	"clientAPI/tools"
-	"fmt"
 )
 
 // Models
@@ -21,51 +21,24 @@ type Client struct {
 type Individus struct {
 	ID       uint   `json:"id" gorm:"primaryKey"`
 	Name     string `json:"name"`
-	Surname  string `json:"surname"`  // Add surname field
+	Surname  string `json:"surname"` // Add surname field
 	ClientID uint   `json:"client_id"`
 }
 
 type CNI struct {
-	ID      uint   `json:"id" gorm:"primaryKey"`
-	Number  string `json:"number"`
+	ID             uint   `json:"id" gorm:"primaryKey"`
+	Number         string `json:"number"`
 	Date_of_expiry string `json:"date_of_expiry"`
-	IndividusID uint   `json:"individus_id"`
+	IndividusID    uint   `json:"individus_id"`
 }
 
 type Collaborateurs struct {
-	ID        uint   `json:"id" gorm:"primaryKey"`
-	Email     string `json:"name"`
-	Password  string `json:"surname"`
+	ID       uint   `json:"id" gorm:"primaryKey"`
+	Email    string `json:"name"`
+	Password string `json:"surname"`
 }
 
 var db *gorm.DB
-var Token = ""
-
-func main() {
-	gin.SetMode(gin.ReleaseMode)
-	Token = tools.LoadEnv() // Load environment variables
-
-	initDB()	 // Initialize the database
-	r := gin.Default()
-
-	// Public route
-	r.GET("/api", getDoc)
-	r.GET("/", Error404)
-
-	// Protected routes
-	protected := r.Group("/")
-	protected.Use(AuthMiddleware())
-	{
-		protected.GET("/clients", getClients)
-		protected.GET("/clients/:id", getClient)
-		protected.GET("/individus", getIndividus)
-		protected.GET("/individus/:id", getIndividu)
-		protected.POST("/cni/create", postCNI)
-		protected.POST("/login", postlogin)
-	}
-
-	r.Run(":8080")
-}
 
 func initDB() {
 	var err error
@@ -100,8 +73,8 @@ func getClients(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Success Retrieving clients",
-		"code": 200,
-		"data": clients,
+		"code":    200,
+		"data":    clients,
 	})
 }
 
@@ -112,15 +85,15 @@ func getClient(c *gin.Context) {
 	if err := db.First(&client, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "Client not found",
-			"code": 404,
+			"code":    404,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Success Retrieving the client",
-		"code": 200,
-		"data": client,
+		"code":    200,
+		"data":    client,
 	})
 }
 
@@ -130,8 +103,8 @@ func getIndividus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Success Retrieving the individus",
-		"code": 200,
-		"data": individus,
+		"code":    200,
+		"data":    individus,
 	})
 }
 
@@ -142,15 +115,15 @@ func getIndividu(c *gin.Context) {
 	if err := db.First(&individu, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "Individu not found",
-			"code": 404,
+			"code":    404,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Success Retrieving the individu",
-		"code": 200,
-		"data": individu,
+		"code":    200,
+		"data":    individu,
 	})
 }
 
@@ -160,20 +133,27 @@ func postlogin(c *gin.Context) {
 		Password string `json:"password"`
 	}
 
+	fmt.Printf("Tentative de connexion reçue\n")
+
 	// Bind JSON body to request struct
 	if err := c.ShouldBindJSON(&request); err != nil {
+		fmt.Printf("Erreur de parsing JSON: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid request body",
-			"code": 400,
+			"code":    400,
 		})
 		return
 	}
 
+	fmt.Printf("Email reçu: %s\n", request.Email)
+	fmt.Printf("Password reçu: %s\n", request.Password)
+
 	// Check if email or password is empty
 	if request.Email == "" || request.Password == "" {
+		fmt.Printf("Email ou mot de passe vide\n")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Email and password are required",
-			"code": 400,
+			"code":    400,
 		})
 		return
 	}
@@ -182,35 +162,40 @@ func postlogin(c *gin.Context) {
 
 	// Find the collaborator by email
 	if err := db.First(&collaborateur, "email = ?", request.Email).Error; err != nil {
+		fmt.Printf("Utilisateur non trouvé: %v\n", err)
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusOK, gin.H{
 				"message": "Invalid email or password",
-				"code": 401,
+				"code":    401,
 			})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "Internal server error",
-				"code": 500,
+				"code":    500,
 			})
 		}
 		return
 	}
-	fmt.Println(collaborateur.Password, tools.HashPasswordSHA256(request.Password))
+
+	fmt.Printf("Utilisateur trouvé: %+v\n", collaborateur)
+
 	// Compare the provided password with the hashed password in the database
-	if collaborateur.Password != tools.HashPasswordSHA256(request.Password) {
+	if collaborateur.Password != request.Password {
+		fmt.Printf("Mot de passe incorrect\n")
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Invalid email or password",
-			"code": 401,
+			"code":    401,
 		})
 		return
 	}
 
+	fmt.Printf("Connexion réussie\n")
 	// If login is successful, respond with the collaborator data (or a token)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
-		"code": 200,
-		"id": collaborateur.ID,
-		"email": collaborateur.Email,
+		"code":    200,
+		"id":      collaborateur.ID,
+		"email":   collaborateur.Email,
 	})
 }
 
@@ -220,7 +205,7 @@ func postCNI(c *gin.Context) {
 	if err := c.ShouldBindJSON(&cni); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid request data",
-			"code": 400,
+			"code":    400,
 		})
 		return
 	}
@@ -230,7 +215,7 @@ func postCNI(c *gin.Context) {
 	if err := db.First(&individu, cni.IndividusID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "Individu not found",
-			"code": 404,
+			"code":    404,
 		})
 		return
 	}
@@ -239,7 +224,7 @@ func postCNI(c *gin.Context) {
 	if err := db.Create(&cni).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Internal server error",
-			"code": 500,
+			"code":    500,
 		})
 		return
 	}
@@ -303,7 +288,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		token := tokenParts[1]
 		// Verify the token (replace with actual verification logic)
-		if token != Token { // Replace this with real token validation
+		if token != "6UXrKe@zSKdnn7rUz#4A@NQ6CU#PYEgw4eRuK^*f" { // Replace this with real token validation
 
 			c.JSON(http.StatusOK, gin.H{
 				"code":    403,
@@ -318,4 +303,43 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func main() {
+	initDB()
+
+	r := gin.Default()
+	r.Use(CORSMiddleware())
+
+	// Public routes
+	r.GET("/api", getDoc)
+	r.GET("/", Error404)
+	r.POST("/login", postlogin) // Déplacer la route login en dehors du groupe protégé
+
+	protected := r.Group("/")
+	protected.Use(AuthMiddleware())
+	{
+		protected.GET("/clients", getClients)
+		protected.GET("/clients/:id", getClient)
+		protected.GET("/individus", getIndividus)
+		protected.GET("/individus/:id", getIndividu)
+		protected.POST("/cni/create", postCNI)
+	}
+
+	fmt.Println("Serveur démarré sur http://127.0.0.1:8080")
+	r.Run(":8080")
+}

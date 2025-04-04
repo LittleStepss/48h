@@ -1,4 +1,4 @@
 class APIConfig {
-  // URL du serveur Go avec le port du frontend
-  static const String baseUrl = 'http://localhost:53885';
+  // URL du serveur Go sans le préfixe /api en double
+  static const String baseUrl = 'http://localhost:8080';
 }

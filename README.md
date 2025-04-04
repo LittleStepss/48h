@@ -1,4 +1,85 @@
-# 48h
+# Cerfrance ID Scanner
+
+Application mobile pour la numérisation des cartes d'identité des clients Cerfrance Vendée.
+
+## Description
+
+Cette application permet aux employés de Cerfrance Vendée de simplifier le processus de numérisation des cartes d'identité de leurs clients. Elle offre les fonctionnalités suivantes :
+
+- Authentification sécurisée
+- Sélection des clients
+- Sélection des individus
+- Scan de carte d'identité avec OCR
+- Vérification et correction des informations extraites
+- Envoi sécurisé des données
+
+## Prérequis
+
+- Flutter SDK (version 3.7.2 ou supérieure)
+- Android Studio / Xcode pour le développement
+- Un appareil Android pour tester (l'application n'est pas compatible iOS)
+
+## Installation
+
+1. Clonez le dépôt :
+```bash
+git clone [URL_DU_REPO]
+```
+
+2. Installez les dépendances :
+```bash
+cd front
+flutter pub get
+```
+
+3. Lancez l'application :
+```bash
+flutter run
+```
+
+## Architecture
+
+### Frontend (Flutter)
+- `lib/screens/` : Écrans de l'application
+- `lib/services/` : Services pour l'authentification, l'API et le scan
+- `lib/config/` : Configuration de l'application
+- `lib/models/` : Modèles de données
+
+### Backend (Go)
+- `backend/main.go` : Point d'entrée du serveur
+- `backend/handlers/` : Gestionnaires d'API
+- `backend/models/` : Modèles de données
+- `backend/middleware/` : Middleware (authentification, etc.)
+
+## Sécurité
+
+L'application implémente plusieurs mesures de sécurité :
+
+- Stockage sécurisé des tokens d'authentification
+- Chiffrement des données sensibles
+- Validation des entrées utilisateur
+- Gestion sécurisée des images
+- Protection contre les attaques CSRF
+
+## Documentation API
+
+L'API est documentée avec OpenAPI. Consultez la documentation complète dans le dossier `docs/api`.
+
+## Contribution
+
+1. Forkez le projet
+2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`)
+3. Committez vos changements (`git commit -m 'Add some AmazingFeature'`)
+4. Pushez vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrez une Pull Request
+
+## Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## Contact
+
+Pour toute question ou suggestion, contactez l'équipe de développement.
 
 cd front 
 flutter pub get pour recuperer les dependances 
@@ -6,14 +87,14 @@ flutter run pour lance le projet
 
 ## Rappel de la demande :
 
-L’objectif idéal est de développer une application mobile pour le compte de Cerfrance Vendée, permettant de :  
+L'objectif idéal est de développer une application mobile pour le compte de Cerfrance Vendée, permettant de :  
 
 Sélectionner un client dans une liste de clients (à récupérer via un appel API)
 Sélectionner une personne physique présente dans ce dossier client (à récupérer via un appel API)
-Prendre en photo sa carte d’identité (CNI), 
+Prendre en photo sa carte d'identité (CNI), 
 Idéalement, la détourer, remettre à plat, etc., 
 Appeler une API pour venir passer en paramètre :
-La scan retouché de la carte d’identité
+La scan retouché de la carte d'identité
 Les informations océrisées de la CNI.
 Les informations indispensables à récupérer sur la CNI sont les suivantes :
 Nom
@@ -21,11 +102,11 @@ Prénom
 Date de naissance
 Date de fin de validité de la CNI
 Numéro de la CNI.
-Voici la cinématique de l’application mobile :
+Voici la cinématique de l'application mobile :
 
 ![image](https://github.com/user-attachments/assets/bafb3366-40e6-447f-a20b-f4d113a568a2)
 
-Les APIs Cerfrance Vendée existent déjà et se chargent de fournir la liste des clients, des individus composant un client, et l’enregistrement des informations en base. Dans le cadre de ce challenge, vous pourrez mettre en place un back-end pour simuler ces APIs.
+Les APIs Cerfrance Vendée existent déjà et se chargent de fournir la liste des clients, des individus composant un client, et l'enregistrement des informations en base. Dans le cadre de ce challenge, vous pourrez mettre en place un back-end pour simuler ces APIs.
 
 Afin de rester cohérent, vous devrez néanmoins vous assurer de la sécurité de ce back-end en termes de stockage, d'accès, et assurer la sécurité des transferts de données du client au back-end.
 

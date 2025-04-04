@@ -21,27 +21,17 @@ class OCRService {
 
       final url = Uri.parse('${APIConfig.baseUrl}/cni/create');
       print('Envoi de la requête à $url');
-      print('Headers de la requête:');
-
-      // Récupérer le token depuis le localStorage
-      final token = html.window.localStorage['token'];
-      print('Token trouvé: ${token != null}');
 
       xhr.open('POST', url.toString());
 
       // Ajouter les headers nécessaires
       xhr.setRequestHeader('Accept', '*/*');
+
+      // Récupérer le token depuis le localStorage
+      final token = html.window.localStorage['token'];
       if (token != null) {
         xhr.setRequestHeader('Authorization', 'Bearer $token');
-        print('Header Authorization ajouté');
       }
-
-      xhr.onReadyStateChange.listen((event) {
-        print('État de la requête: ${xhr.readyState}');
-        if (xhr.readyState == html.HttpRequest.DONE) {
-          print('Requête terminée avec le status: ${xhr.status}');
-        }
-      });
 
       xhr.onLoad.listen((event) {
         print('Status de la réponse: ${xhr.status}');
@@ -74,15 +64,11 @@ class OCRService {
       xhr.onError.listen((event) {
         print('Erreur XHR: ${xhr.statusText}');
         print('Status de l\'erreur: ${xhr.status}');
-        print('ReadyState: ${xhr.readyState}');
         final errorText = xhr.responseText ?? 'Pas de message d\'erreur';
         print('Réponse d\'erreur: $errorText');
         if (xhr.status == 0) {
           completerXhr.completeError(
-            'Erreur de connexion au serveur. Vérifiez que :\n'
-            '1. Le serveur est en cours d\'exécution\n'
-            '2. Le port ${Uri.parse(APIConfig.baseUrl).port} est correct\n'
-            '3. Les règles CORS sont correctement configurées',
+            'Erreur de connexion au serveur. Vérifiez que le serveur est en cours d\'exécution et accessible.',
           );
         } else {
           completerXhr.completeError('Erreur lors de la requête');
@@ -90,15 +76,12 @@ class OCRService {
       });
 
       // Envoyer la requête
-      print('Envoi de la requête...');
       xhr.send(formData);
-      print('Requête envoyée');
 
       try {
         final result = await completerXhr.future.timeout(
           const Duration(seconds: 30),
           onTimeout: () {
-            print('Timeout de la requête après 30 secondes');
             xhr.abort();
             throw TimeoutException('Le serveur met trop de temps à répondre');
           },
