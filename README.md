@@ -1,6 +1,149 @@
-# Cerfrance ID Scanner
+# Scanner CNI Cerfrance
 
-Application mobile pour la numérisation des cartes d'identité des clients Cerfrance Vendée.
+Application mobile développée pour Cerfrance Vendée permettant la numérisation et l'extraction automatique des informations des cartes d'identité.
+
+## Fonctionnalités
+
+- 🔐 Authentification sécurisée des utilisateurs
+- 👥 Gestion des clients et des individus
+- 📸 Capture de carte d'identité avec l'appareil photo
+- 🔍 Extraction automatique des informations (OCR) :
+  - Nom
+  - Prénom
+  - Date de naissance
+  - Date de validité
+  - Numéro de CNI (MRZ)
+- ✅ Vérification et correction manuelle des données extraites
+- 🔒 Transmission sécurisée des données
+
+## Prérequis
+
+### Frontend (Flutter)
+- Flutter SDK (version 3.7.2 ou supérieure)
+- Android Studio / VS Code
+- Un appareil Android (physique ou émulateur)
+
+### Backend (Go)
+- Go 1.21 ou supérieur
+- Tesseract OCR avec le pack français
+  - Windows : `choco install tesseract`
+  - Linux : `apt-get install tesseract-ocr tesseract-ocr-fra`
+  - macOS : `brew install tesseract`
+- PostgreSQL 15 ou supérieur
+
+## Installation
+
+1. Cloner le projet :
+```bash
+git clone [URL_DU_REPO]
+cd [NOM_DU_REPO]
+```
+
+2. Configuration du backend :
+```bash
+cd back
+go mod tidy
+cp .env.example .env
+# Éditer le fichier .env avec vos paramètres
+```
+
+3. Configuration du frontend :
+```bash
+cd front
+flutter pub get
+# Configurer l'URL de l'API dans lib/config/api_config.dart
+```
+
+## Démarrage
+
+1. Lancer le backend :
+```bash
+cd back
+go run .
+```
+
+2. Lancer le frontend :
+```bash
+cd front
+flutter run
+```
+
+## Structure du projet
+
+### Frontend
+```
+front/
+├── lib/
+│   ├── config/        # Configuration (API, etc.)
+│   ├── models/        # Modèles de données
+│   ├── screens/       # Écrans de l'application
+│   ├── services/      # Services (API, OCR, etc.)
+│   └── widgets/       # Widgets réutilisables
+└── test/             # Tests unitaires et d'intégration
+```
+
+### Backend
+```
+back/
+├── handlers/         # Gestionnaires d'API
+├── middleware/       # Middleware (auth, CORS, etc.)
+├── models/          # Modèles de données
+├── services/        # Services (OCR, etc.)
+└── main.go          # Point d'entrée
+```
+
+## Sécurité
+
+- 🔐 Authentification JWT
+- 🔒 HTTPS obligatoire en production
+- 🛡️ Protection CORS configurée
+- 📝 Validation des entrées
+- 🗑️ Nettoyage automatique des fichiers temporaires
+- 🔍 Logs détaillés pour l'audit
+
+## API Documentation
+
+La documentation de l'API est disponible aux endpoints suivants :
+- `/swagger/index.html` : Documentation interactive
+- `/swagger/doc.json` : Spécification OpenAPI
+
+## Tests
+
+### Frontend
+```bash
+cd front
+flutter test
+```
+
+### Backend
+```bash
+cd back
+go test ./...
+```
+
+## Contribution
+
+1. Fork du projet
+2. Création d'une branche (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Commit des changements (`git commit -m 'Ajout nouvelle fonctionnalité'`)
+4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+5. Création d'une Pull Request
+
+## Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## Support
+
+Pour toute question ou problème :
+1. Consulter la documentation
+2. Vérifier les issues existantes
+3. Créer une nouvelle issue si nécessaire
+
+## Auteurs
+
+- Équipe Cerfrance Vendée
+- Contributeurs externes
 
 ## Description
 
@@ -12,30 +155,6 @@ Cette application permet aux employés de Cerfrance Vendée de simplifier le pro
 - Scan de carte d'identité avec OCR
 - Vérification et correction des informations extraites
 - Envoi sécurisé des données
-
-## Prérequis
-
-- Flutter SDK (version 3.7.2 ou supérieure)
-- Android Studio / Xcode pour le développement
-- Un appareil Android pour tester (l'application n'est pas compatible iOS)
-
-## Installation
-
-1. Clonez le dépôt :
-```bash
-git clone [URL_DU_REPO]
-```
-
-2. Installez les dépendances :
-```bash
-cd front
-flutter pub get
-```
-
-3. Lancez l'application :
-```bash
-flutter run
-```
 
 ## Architecture
 
