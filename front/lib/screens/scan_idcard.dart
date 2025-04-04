@@ -28,13 +28,11 @@ class _ScanIdCardScreenState extends State<ScanIdCardScreen> {
         _errorMessage = null;
       });
 
-      // Créer un input de type file
       final input =
           html.FileUploadInputElement()
             ..accept = 'image/*'
             ..click();
 
-      // Attendre la sélection du fichier
       await input.onChange.first;
 
       if (input.files?.isEmpty ?? true) {
@@ -47,7 +45,6 @@ class _ScanIdCardScreenState extends State<ScanIdCardScreen> {
 
       final file = input.files!.first;
 
-      // Vérifier le type de fichier
       if (!file.type!.startsWith('image/')) {
         setState(() {
           _errorMessage = 'Veuillez sélectionner une image';
@@ -56,16 +53,17 @@ class _ScanIdCardScreenState extends State<ScanIdCardScreen> {
         return;
       }
 
-      // Créer l'URL de l'image
       _imageUrl = html.Url.createObjectUrlFromBlob(file);
       setState(() {});
 
       // Appeler le service OCR
-      final ocrData = await OCRService.scanIdCard(file);
+      final ocrData = await OCRService.scanIdCard(file, widget.individuId);
 
-      // Navigation vers l'écran suivant
+      print('Données OCR reçues: $ocrData'); // Debug log
+
       if (!mounted) return;
 
+      // Navigation vers l'écran suivant avec les données OCR
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -73,7 +71,13 @@ class _ScanIdCardScreenState extends State<ScanIdCardScreen> {
               (context) => InfosIdCardScreen(
                 individuId: widget.individuId,
                 imageUrl: _imageUrl!,
-                ocrData: ocrData,
+                ocrData: {
+                  'nom': ocrData['data']['nom'] ?? '',
+                  'prenom': ocrData['data']['prenom'] ?? '',
+                  'date_naissance': ocrData['data']['date_naissance'] ?? '',
+                  'date_validite': ocrData['data']['date_validite'] ?? '',
+                  'numero': ocrData['data']['numero'] ?? '',
+                },
               ),
         ),
       );

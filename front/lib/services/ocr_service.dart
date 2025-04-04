@@ -1,100 +1,111 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:front/config/api_config.dart';
 
 class OCRService {
-  static Future<Map<String, dynamic>> scanIdCard(html.File file) async {
+  static Future<Map<String, dynamic>> scanIdCard(
+    html.File file,
+    int individuId,
+  ) async {
     try {
-      print('Début du scan de la carte...');
-      print('Type de fichier: ${file.type}');
-      print('Taille du fichier: ${file.size} bytes');
-
-      // Créer un FormData pour l'envoi multipart
-      final formData = html.FormData();
-      formData.appendBlob('image', file, file.name);
-
-      // Créer un objet XMLHttpRequest pour gérer manuellement la requête
-      final xhr = html.HttpRequest();
-      final completerXhr = Completer<Map<String, dynamic>>();
-
       final url = Uri.parse('${APIConfig.baseUrl}/cni/create');
-      print('Envoi de la requête à $url');
 
-      xhr.open('POST', url.toString());
+      // Créer un form data
+      var request = http.MultipartRequest('POST', url);
 
-      // Ajouter les headers nécessaires
-      xhr.setRequestHeader('Accept', '*/*');
+      // Lire le fichier
+      final reader = html.FileReader();
+      final completer = Completer<List<int>>();
 
-      // Récupérer le token depuis le localStorage
-      final token = html.window.localStorage['token'];
-      if (token != null) {
-        xhr.setRequestHeader('Authorization', 'Bearer $token');
-      }
-
-      xhr.onLoad.listen((event) {
-        print('Status de la réponse: ${xhr.status}');
-        print('Headers de la réponse: ${xhr.getAllResponseHeaders()}');
-
-        if (xhr.status == 200) {
-          print('Réponse reçue avec succès');
-          final responseText = xhr.responseText;
-          if (responseText != null && responseText.isNotEmpty) {
-            try {
-              final data = jsonDecode(responseText);
-              completerXhr.complete(data);
-            } catch (e) {
-              print('Erreur lors du décodage de la réponse: $e');
-              print('Réponse reçue: $responseText');
-              completerXhr.completeError('Format de réponse invalide');
-            }
-          } else {
-            print('Réponse vide reçue du serveur');
-            completerXhr.completeError('Réponse vide du serveur');
-          }
+      reader.onLoadEnd.listen((e) {
+        final result = reader.result;
+        if (result is List<int>) {
+          completer.complete(result);
         } else {
-          print('Erreur HTTP: ${xhr.status} - ${xhr.statusText}');
-          final errorText = xhr.responseText ?? 'Pas de message d\'erreur';
-          print('Réponse: $errorText');
-          completerXhr.completeError('Erreur HTTP: ${xhr.status}');
+          completer.completeError('Format de fichier non supporté');
         }
       });
 
-      xhr.onError.listen((event) {
-        print('Erreur XHR: ${xhr.statusText}');
-        print('Status de l\'erreur: ${xhr.status}');
-        final errorText = xhr.responseText ?? 'Pas de message d\'erreur';
-        print('Réponse d\'erreur: $errorText');
-        if (xhr.status == 0) {
-          completerXhr.completeError(
-            'Erreur de connexion au serveur. Vérifiez que le serveur est en cours d\'exécution et accessible.',
-          );
-        } else {
-          completerXhr.completeError('Erreur lors de la requête');
-        }
-      });
+      reader.readAsArrayBuffer(file);
+      final bytes = await completer.future;
+
+      // Ajouter le fichier
+      request.files.add(
+        http.MultipartFile.fromBytes('file', bytes, filename: file.name),
+      );
+
+      // Ajouter l'ID
+      request.fields['individu_id'] = individuId.toString();
+
+      print('=== Début du scan de la carte d\'identité ===');
+      print('Détails du fichier:');
+      print('- Type: ${file.type}');
+      print('- Taille: ${file.size} bytes');
+      print('- Nom: ${file.name}');
+      print('- ID de l\'individu: $individuId');
 
       // Envoyer la requête
-      xhr.send(formData);
+      final response = await http.Response.fromStream(await request.send());
 
-      try {
-        final result = await completerXhr.future.timeout(
-          const Duration(seconds: 30),
-          onTimeout: () {
-            xhr.abort();
-            throw TimeoutException('Le serveur met trop de temps à répondre');
-          },
-        );
-        print('Données OCR extraites avec succès');
-        return result;
-      } catch (e) {
-        print('Erreur lors de l\'attente de la réponse: $e');
-        rethrow;
+      print('=== Réponse reçue ===');
+      print('Status: ${response.statusCode}');
+      print('Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        print('Données OCR reçues: $jsonResponse');
+
+        if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
+          final data = jsonResponse['data'];
+          return {
+            'success': true,
+            'data': {
+              'nom': data['nom'] ?? '',
+              'prenom': data['prenom'] ?? '',
+              'date_naissance': data['date_naissance'] ?? '',
+              'date_validite': data['date_validite'] ?? '',
+              'numero': data['numero'] ?? '',
+            },
+          };
+        }
       }
+
+      throw 'Erreur serveur: ${response.statusCode}';
     } catch (e) {
-      print('Erreur détaillée lors du scan: $e');
-      throw Exception('Erreur lors du scan de la carte: $e');
+      print('Erreur dans scanIdCard: $e');
+      return {'success': false, 'error': e.toString()};
     }
+  }
+
+  static Future<Uint8List> _readFileAsBytes(html.File file) async {
+    final completer = Completer<Uint8List>();
+    final reader = html.FileReader();
+
+    reader.onLoad.listen((e) {
+      try {
+        final result = reader.result;
+        if (result is Uint8List) {
+          completer.complete(result);
+        } else if (result is String) {
+          final bytes = Uint8List.fromList(result.codeUnits);
+          completer.complete(bytes);
+        } else {
+          throw Exception('Format de fichier non supporté');
+        }
+      } catch (e) {
+        completer.completeError(e);
+      }
+    });
+
+    reader.onError.listen((e) {
+      completer.completeError('Erreur lors de la lecture du fichier');
+    });
+
+    reader.readAsArrayBuffer(file);
+    return completer.future;
   }
 }
