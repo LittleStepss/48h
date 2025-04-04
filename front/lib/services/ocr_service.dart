@@ -12,34 +12,13 @@ class OCRService {
     int individuId,
   ) async {
     try {
+      // Créer l'URL
       final url = Uri.parse('${APIConfig.baseUrl}/cni/create');
 
-      // Créer un form data
-      var request = http.MultipartRequest('POST', url);
-
-      // Lire le fichier
-      final reader = html.FileReader();
-      final completer = Completer<List<int>>();
-
-      reader.onLoadEnd.listen((e) {
-        final result = reader.result;
-        if (result is List<int>) {
-          completer.complete(result);
-        } else {
-          completer.completeError('Format de fichier non supporté');
-        }
-      });
-
-      reader.readAsArrayBuffer(file);
-      final bytes = await completer.future;
-
-      // Ajouter le fichier
-      request.files.add(
-        http.MultipartFile.fromBytes('file', bytes, filename: file.name),
-      );
-
-      // Ajouter l'ID
-      request.fields['individu_id'] = individuId.toString();
+      // Créer le FormData
+      final formData = html.FormData();
+      formData.appendBlob('file', file);
+      formData.append('individu_id', individuId.toString());
 
       print('=== Début du scan de la carte d\'identité ===');
       print('Détails du fichier:');
@@ -48,33 +27,49 @@ class OCRService {
       print('- Nom: ${file.name}');
       print('- ID de l\'individu: $individuId');
 
-      // Envoyer la requête
-      final response = await http.Response.fromStream(await request.send());
+      // Envoyer la requête avec XMLHttpRequest
+      final completer = Completer<Map<String, dynamic>>();
+      final xhr = html.HttpRequest();
 
-      print('=== Réponse reçue ===');
-      print('Status: ${response.statusCode}');
-      print('Body: ${response.body}');
+      xhr.open('POST', url.toString());
+      xhr.withCredentials = false;
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        print('Données OCR reçues: $jsonResponse');
+      xhr.onLoad.listen((e) {
+        print('=== Réponse reçue ===');
+        print('Status: ${xhr.status}');
+        print('Response Text: ${xhr.responseText}');
 
-        if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
-          final data = jsonResponse['data'];
-          return {
-            'success': true,
-            'data': {
-              'nom': data['nom'] ?? '',
-              'prenom': data['prenom'] ?? '',
-              'date_naissance': data['date_naissance'] ?? '',
-              'date_validite': data['date_validite'] ?? '',
-              'numero': data['numero'] ?? '',
-            },
-          };
+        if (xhr.status == 200) {
+          final jsonResponse = json.decode(xhr.responseText!);
+          print('Données OCR reçues: $jsonResponse');
+
+          if (jsonResponse['success'] == true && jsonResponse['data'] != null) {
+            final data = jsonResponse['data'];
+            completer.complete({
+              'success': true,
+              'data': {
+                'nom': data['nom'] ?? '',
+                'prenom': data['prenom'] ?? '',
+                'date_naissance': data['date_naissance'] ?? '',
+                'date_validite': data['date_validite'] ?? '',
+                'numero': data['numero'] ?? '',
+              },
+            });
+          } else {
+            completer.completeError('Réponse invalide du serveur');
+          }
+        } else {
+          completer.completeError('Erreur serveur: ${xhr.status}');
         }
-      }
+      });
 
-      throw 'Erreur serveur: ${response.statusCode}';
+      xhr.onError.listen((e) {
+        print('Erreur lors de la requête: ${xhr.statusText}');
+        completer.completeError('Erreur lors de la requête');
+      });
+
+      xhr.send(formData);
+      return await completer.future;
     } catch (e) {
       print('Erreur dans scanIdCard: $e');
       return {'success': false, 'error': e.toString()};
