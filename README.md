@@ -2,6 +2,17 @@
 
 Application mobile développée pour Cerfrance Vendée permettant la numérisation et l'extraction automatique des informations des cartes d'identité.
 
+## L'équipe
+
+- Matéo MESGUEN
+- Simon LOUIS
+- Gurvan NICOLAS
+- Luce MAKAYA
+- Aurelien DUGAST
+- Stanislas IBRAHIM
+- Najm ADAM
+- Kevin MICHOT
+
 ## Fonctionnalités
 
 - 🔐 Authentification sécurisée des utilisateurs
