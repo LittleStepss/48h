@@ -98,7 +98,7 @@ func HandleOCR(db *gorm.DB) http.HandlerFunc {
 		}
 
 		// Récupération du fichier
-		file, header, err := r.FormFile("image")
+		file, header, err := r.FormFile("file")
 		if err != nil {
 			log.Printf("Erreur récupération fichier: %v", err)
 			sendJSONError(w, "Erreur récupération fichier", http.StatusBadRequest)
