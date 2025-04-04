@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"github.com/joho/godotenv"
+	"os"
 )
 
 // Structure pour les clients
@@ -28,11 +30,9 @@ type APIResponse[T any] struct {
 	Message string `json:"message"`
 }
 
-const (
-	baseURL = "http://foureight.gurvan-nicolas.fr:8080"
-	// 🔹 Token d'authentification en dur
-	authToken = "6UXrKe@zSKdnn7rUz#4A@NQ6CU#PYEgw4eRuK^*f"
-)
+const baseURL = "http://foureight.gurvan-nicolas.fr:8080"
+
+var authToken = ""
 
 // 🔹 Fonction GET avec AUTHENTIFICATION
 func getDataWithAuth[T any](endpoint string) ([]T, error) {
@@ -66,7 +66,23 @@ func getDataWithAuth[T any](endpoint string) ([]T, error) {
 	return apiResp.Data, nil
 }
 
+func LoadEnv() string {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("❌ Error loading .env file")
+		os.Exit(0)
+	}
+	fmt.Println("✅ .env file loaded")
+
+	// Exemple : accès à une variable
+	token := os.Getenv("AUTH_TOKEN")
+	return token
+}
+
+
 func main() {
+	// Get the auth token from .env file
+	authToken = LoadEnv()
 	// 🔹 Récupération des clients (avec auth)
 	clients, err := getDataWithAuth[Client]("/clients")
 	if err != nil {
