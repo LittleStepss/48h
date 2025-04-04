@@ -54,6 +54,13 @@ flutter pub get
 # Configurer l'URL de l'API dans lib/config/api_config.dart
 ```
 
+4. Configuartion de l'api de cerfrance :
+```bash
+cd cerfrance_api
+go mod init clientAPI
+go mod tidy
+```
+
 ## Démarrage
 
 1. Lancer le backend :
@@ -66,6 +73,13 @@ go run .
 ```bash
 cd front
 flutter run
+```
+
+
+3. Lancer l'api cerfrance :
+```bash
+cd cerfrance_api
+go run main.go
 ```
 
 ## Structure du projet
