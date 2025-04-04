@@ -1,105 +1,129 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:front/screens/select_person.dart';
-import 'package:http/http.dart' as http;
+import 'package:front/services/api_service.dart';
+import 'dart:convert';
 
 class SelectClientScreen extends StatefulWidget {
+  const SelectClientScreen({Key? key}) : super(key: key);
+
   @override
   _SelectClientScreenState createState() => _SelectClientScreenState();
 }
 
 class _SelectClientScreenState extends State<SelectClientScreen> {
-  TextEditingController searchController = TextEditingController();
-  List<dynamic> clients = [];
-  List<dynamic> filteredClients = [];
-
-  final String token = "6UXrKe@zSKdnn7rUz#4A@NQ6CU#PYEgw4eRuK^*f";
+  List<dynamic> _clients = [];
+  List<dynamic> _filteredClients = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    fetchClients();
+    _fetchClients();
+    _searchController.addListener(_filterClients);
   }
 
-  Future<void> fetchClients() async {
-    final String apiUrl = "http://foureight.gurvan-nicolas.fr:8080/clients";
+  Future<void> _fetchClients() async {
     try {
-      final response = await http.get(
-        Uri.parse(apiUrl),
-        headers: {
-          "Authorization": "Bearer $token", 
-          "Content-Type": "application/json",
-        },
-      );
-      if (response.statusCode == 200) {
-        setState(() {
-          final Map<String, dynamic> responseData = jsonDecode(response.body);
-          clients = responseData["data"];
-          filteredClients = clients;
-        });
-      } else {
-        print("Erreur de chargement: \${response.statusCode}");
-      }
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final clients = await ApiService.getClients();
+      print('Clients reçus dans SelectClientScreen:');
+      print(jsonEncode(clients));
+
+      setState(() {
+        _clients = List<dynamic>.from(clients);
+        _filteredClients = List<dynamic>.from(clients);
+        _isLoading = false;
+      });
     } catch (e) {
-      print("Erreur: \$e");
+      setState(() {
+        _errorMessage = 'Erreur lors de la récupération des clients: $e';
+        _isLoading = false;
+      });
     }
   }
 
-  //filtrer les clients (barre de recherche)
-  void filterClients(String query) {
+  void _filterClients() {
+    final query = _searchController.text.toLowerCase();
     setState(() {
-      filteredClients =
-          clients.where((client) {
-            String clientName = client["name"] ?? "";
-            return clientName.toLowerCase().contains(query.toLowerCase());
-          }).toList();
+      _filteredClients =
+          _clients
+              .where(
+                (client) =>
+                    client['name'].toString().toLowerCase().contains(query),
+              )
+              .toList();
+      print('Clients filtrés:');
+      print(jsonEncode(_filteredClients));
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Sélectionner un client')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                labelText: 'Rechercher un client',
-                border: OutlineInputBorder(),
+      appBar: AppBar(title: const Text('Sélectionner un client')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: 'Rechercher un client',
                 prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
               ),
-              onChanged: filterClients,
             ),
-            SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredClients.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      filteredClients[index]["name"] ?? "Nom inconnu",
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => SelectPersonScreen(
-                                clientId: filteredClients[index]["id"],
+          ),
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          Expanded(
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _filteredClients.isEmpty
+                    ? const Center(child: Text('Aucun client trouvé'))
+                    : ListView.builder(
+                      itemCount: _filteredClients.length,
+                      itemBuilder: (context, index) {
+                        final client = _filteredClients[index];
+                        return ListTile(
+                          title: Text(client['name']),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => SelectPersonScreen(
+                                      clientId: client['id'],
+                                    ),
                               ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+          ),
+        ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

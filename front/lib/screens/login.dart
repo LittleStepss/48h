@@ -1,60 +1,71 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'select_client.dart';
+import 'package:front/services/auth_service.dart';
+import 'package:front/screens/select_client.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  bool isPasswordVisible = false;
-  String? errorMessage;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  String? _errorMessage;
 
-  final String token = "6UXrKe@zSKdnn7rUz#4A@NQ6CU#PYEgw4eRuK^*f";
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
 
-  Future<void> login() async {
-    final String apiUrl = "http://foureight.gurvan-nicolas.fr:8080/login";
-    
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token", 
-      },
-      body: jsonEncode({
-        "email": emailController.text,
-        "password": passwordController.text,
-      }),
-    );
+  Future<void> _checkAuth() async {
+    if (await AuthService.isAuthenticated()) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => SelectClientScreen()),
+      );
+    }
+  }
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-      if (responseData["code"] == 200) {
-        int userId = responseData["id"];
-        String userEmail = responseData["email"];
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Connexion réussie ! Bienvenue, $userEmail")),
-        );
+    try {
+      final success = await AuthService.login(
+        _emailController.text,
+        _passwordController.text,
+      );
 
+      if (!mounted) return;
+
+      if (success) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => SelectClientScreen()),
         );
       } else {
         setState(() {
-          errorMessage = responseData["message"];
+          _errorMessage = 'Email ou mot de passe incorrect';
         });
       }
-    } else {
+    } catch (e) {
       setState(() {
-        errorMessage = "Erreur serveur (${response.statusCode})";
+        _errorMessage = 'Une erreur est survenue: $e';
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -62,23 +73,24 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Image.asset(
-          'assets/images/cerfrance.jpg',
-          height: 60,
-        ),
+        title: Image.asset('assets/images/cerfrance.jpg', height: 60),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (errorMessage != null)
-              Text(
-                errorMessage!,
-                style: TextStyle(color: Colors.red),
+            if (_errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
               ),
             TextField(
-              controller: emailController,
+              controller: _emailController,
               decoration: const InputDecoration(
                 labelText: 'Email',
                 border: OutlineInputBorder(),
@@ -87,31 +99,43 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: passwordController,
+              controller: _passwordController,
               decoration: InputDecoration(
                 labelText: 'Mot de passe',
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _isPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                   ),
                   onPressed: () {
                     setState(() {
-                      isPasswordVisible = !isPasswordVisible;
+                      _isPasswordVisible = !_isPasswordVisible;
                     });
                   },
                 ),
               ),
-              obscureText: !isPasswordVisible,
+              obscureText: !_isPasswordVisible,
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: login,
-              child: const Text('Se connecter'),
+              onPressed: _isLoading ? null : _login,
+              child:
+                  _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Se connecter'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
